@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+    <Properties>
+        <Property name="logstashHost">${bundle:application:logstash.host}</Property>
+        <Property name="logstashPort">${bundle:application:logstash.port}</Property>
+    </Properties>
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
+        </Console>
+        <Socket name="logstash-tcp-Socket" host="${logstashHost}" port="${logstashPort}">
+            <JsonTemplateLayout eventTemplateUri="classpath:EcsLayout.json"/>
+        </Socket>
+
+        <Http name="HttpLogger" url="http://localhost:8090/jewel/log">
+            <JsonTemplateLayout eventTemplateUri="classpath:EcsLayout.json"/>
+        </Http>
+        <RollingFile
+                name="rollingFile"
+                fileName="/logs/jb-application.log"
+                filePattern="/logs/jb-application/$${date:yyyy-MM}/app-%d{MM-dd-yyyy}-%i.log.gz"
+                ignoreExceptions="false">
+            <JsonTemplateLayout eventTemplateUri="classpath:EcsLayout.json"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy />
+                <SizeBasedTriggeringPolicy size="1500 MB" />
+            </Policies>
+            <DefaultRolloverStrategy max="20"/>
+        </RollingFile>
+    </Appenders>
+    <Loggers>
+        <Root level="trace">
+            <AppenderRef ref="Console" level="info" />
+            <AppenderRef ref="logstash-tcp-Socket" level="info" />
+            <AppenderRef ref="rollingFile" level="info" />
+        </Root>
+    </Loggers>
+</Configuration>
